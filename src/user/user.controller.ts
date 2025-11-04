@@ -1,13 +1,6 @@
-import { Controller, Post, Body } from '@nestjs/common';
-import { UserService } from './user.service';
-import { CreateUserDto } from './dto/create-user.dto';
+import { Controller } from '@nestjs/common';
 
 @Controller('user')
 export class UserController {
-    constructor(private readonly userService: UserService) { }
-
-    @Post('register')
-    register(@Body() createUserDto: CreateUserDto) {
-        return this.userService.register(createUserDto);
-    }
+    // Register endpoint moved to AuthController (/auth/register).
 }

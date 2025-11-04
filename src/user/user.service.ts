@@ -2,7 +2,7 @@ import { Injectable, ConflictException, InternalServerErrorException } from '@ne
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { User } from './user.entity';
-import { CreateUserDto } from './dto/create-user.dto';
+import { RegisterDto } from '../auth/dto/register.dto';
 import * as bcrypt from 'bcrypt';
 
 @Injectable()
@@ -12,8 +12,8 @@ export class UserService {
         private usersRepository: Repository<User>,
     ) { }
 
-    async register(createUserDto: CreateUserDto) {
-        const { email, password } = createUserDto;
+    async register(registerDto: RegisterDto) {
+        const { name, email, password } = registerDto;
 
         const existingUser = await this.usersRepository.findOne({ where: { email } });
         if (existingUser) {
@@ -24,6 +24,7 @@ export class UserService {
         const password_hash = await bcrypt.hash(password, salt);
 
         const newUser = this.usersRepository.create({
+            name,
             email,
             password_hash,
         });
@@ -38,6 +39,25 @@ export class UserService {
             };
         } catch (error) {
             throw new InternalServerErrorException('Đã xảy ra lỗi khi đăng ký');
+        }
+    }
+
+    /**
+     * Lấy user theo id, loại bỏ trường password_hash trước khi trả về
+     */
+    async findById(id: string) {
+        const user = await this.usersRepository.findOne({ where: { id } });
+        if (!user) return null;
+        const { password_hash, ...rest } = user as any;
+        return rest;
+    }
+
+    //validate user for login
+    async validateUser(email: string, password: string): Promise<any> {
+        const user = await this.usersRepository.findOne({ where: { email } });
+        if (user && await bcrypt.compare(password, user.password_hash)) {
+            const { password_hash, ...result } = user;
+            return result;
         }
     }
 }
